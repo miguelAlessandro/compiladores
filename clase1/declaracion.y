@@ -38,7 +38,6 @@ int yylex(void)
 		return c;
 	}
 }
-
 int main (void) {
 	yyparse();
 	return 0;
