@@ -1,0 +1,115 @@
+%{
+#include <bits/stdc++.h>
+#include "symbol.hpp"
+using namespace std;
+struct Point {
+	double x, y;
+	Point(double x=0.d, y=0.d):x(x), y(y) {}
+	Point operator +(Point other) {return Point(x+other.x, y+other.y);}
+	Point operator -(Point other) {return Point(x-other.x, y-other.y);}
+	Point operator *(double c) {return Point(x*c, y*c);}
+	Point operator /(double c) {return Point(x/c, y/c);}
+	bool operator <(Point other) {return x<other.x or x==other.x and y<other.y;}
+	bool operator >(Point other) {return other < *this;}
+	bool operator ==(Point other) {return x==other.x and y==other.y;}
+	bool operator !=(Point other) {return not(*this==other);}
+	bool operator <=(Point other) {return *this<other or *this==other;}
+	bool operator >=(Point other) {return other<=*this;}
+};
+
+void yyerror(const char*);
+%}
+
+%start program
+%token POINT
+%token NUM VAR
+%token ADD SUB 
+%token MUL DIV
+%token POW
+%token AND OR
+%token OP CP
+%token EQUAL ASSING
+%token BEGIN END
+%token IF ELSE
+%token WHILE FOR COMPARATOR
+
+%%
+
+program: BEGIN bloque END;
+
+bloque: sentencia_if bloque
+	| sentencia_while bloque
+	| sentencia_for bloque
+	| funcion bloque
+	| asignacion bloque
+	| declaracion bloque
+	| /* vacío */
+;
+
+funcion: ID '(' args ')' '{' bloque '}';
+args: /* no arguments */
+	| arg
+	| args ',' arg
+;
+arg: term
+;
+
+declaracion: tipodato ID { $2 = localeSimb(lexx, ID); }';' ;
+tipodato: DATOPUNTO /* definir y agregar más */;
+
+sentencia_if: IF '(' lista_cond ')' '{' bloque '}';
+
+sentencia_while: WHILE '(' lista_cond ')' '{' bloque '}';
+
+sentencia_for: FOR '(' asignacion ';' lista_cond ';' asignacion ')' '{' bloque '}';
+
+lista_cond: condicion
+	| lista_cond AND condicion
+	| lista_cond OR condicion
+;
+
+condicion: term COMPARATOR term ;
+
+asignacion: tipodato ID { $2 = localeSimb(lexx, ID); } IGUAL exp { genCod(ASIGNAR, $2, $5, '-'); }';'
+	| term IGUAL exp { genCod(ASIGNAR, $1, $3, '-'); }';'
+	;
+
+exp: factor
+	| exp ADD factor { int i = genTempVar(); genCod(ADD, i, $1, $3); $$ = i; }
+	| exp SUB factor {int i = genTempVar(); genCod(SUB, i, $1, $3); $$ = i; }
+;
+
+factor: factor2
+	| factor MUL factor2 { int i = genTempVar(); genCod(MUL, i, $1, $3); $$ = i; }
+	| factor DIV factor2 { int i = genTempVar(); genCod(DIV, i, $1, $3); $$ = i; }
+;
+
+factor2: term
+	| factor2 POW NUM { int i = genTempVar(); genCod(POW, i, $1, $3); $$ = i; }
+	| '(' exp ')'
+;
+
+term: ID { $$ = localeSimb(lexx, ID); }
+	| NUM { $$ = localeSimb(lexx, NUM); }
+	;
+
+%%
+
+void yyerror(const char msg[]) {
+	printf("Error!!!: %s\n", msg);
+}
+
+int EsPalabraReservada(char * lexema){
+    if (strcasecmp(lexema,"begin")==0) return BEGIN;
+    if (strcasecmp(lexema,"end")==0) return END;
+    if (strcasecmp(lexema,"if")==0) return IF;
+    if (strcasecmp(lexema,"for")==0) return FOR;
+    if (strcasecmp(lexema,"while")==0) return WHILE;
+    if (strcasecmp(lexema, "==") == 0) return COMPARATOR;
+    if (strcasecmp(lexema, "!=") == 0) return COMPARATOR;
+    if (strcasecmp(lexema, "and") == 0) return AND;
+    if (strcasecmp(lexema, "or") == 0) return OR;
+    if (strcasecmp(lexema, "point") == 0) return DATOPUNTO;
+    if (strcasecmp(lexema, "**") == 0) return POW;
+	return ID;
+}
