@@ -1,0 +1,29 @@
+%{
+#include "geoC.tab.hpp"
+#ifndef YY_DECL
+#define YY_DECL int yylex(); 	
+%}
+%%
+\[\[\s*[0-9]+(\.[0-9]+)?,\s*[0-9]+(\.[0-9]+)?\]\] { strcpy(lexema, yytext); return POINT;}
+[0-9]+(\.[0-9]+)? { yylval = strcpy(lexema, yytext); return NUM;}
+[a-zA-Z]+([a-zA-Z0-9]+)? { strcpy(lexema, yytext); return VAR;}
+"+" {return ADD;}
+"-" {return SUB;}
+"/" {return DIV;}
+"*" {return MUL;}
+"(" {return OP;}
+")" {return CP;}
+"{" {return OB;}
+"}" {return CB;}
+(begin) {return INIT;}
+(end) {return END;}
+"if" {return IF;}
+"for" {return FOR;}
+"while" {return WHILE;}
+== {return EQUAL;}
+!= {return DIFF;} 
+"and" {return AND;}
+"or" {return OR;}
+("point"|"int"|"double"|"long") {return DATATYPE;}
+. {}
+%%

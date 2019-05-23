@@ -1,6 +1,6 @@
 #makefile to geoParser
-geoParser: 	geometry_lex.l geometry_parser.y
-			bison -d geometry_parser.y
-			flex geometry_lex.l
-			cc -o $@ geometry_parser.tab.c lex.yy.c -lfl
+geoParser: 	geoC.lpp geoC.ypp
+			bison geoC.ypp
+			flex geoC.lpp
+			g++ -o $@ geoC.tab.cpp lex.yy.cpp -lfl
 

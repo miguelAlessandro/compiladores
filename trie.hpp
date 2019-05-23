@@ -1,15 +1,18 @@
 #ifndef TRIE_HPP
 #define TRIE_HPP
+#include <vector>
+using namespace std;
 const int NIL = 0;
 template<class T>
 struct Trie {
 public:
-	vector<vector<int>> link;
+	vector<vector<int> > link;
 	vector<T> value;	
 	int elem, sz;
 	vector<bool> term;
 	vector<int> id;
-	void Trie(int len, int sigma=256): elem(0), sz(0) {
+	Trie(int len, int sigma=256){
+		elem = sz = 0;
 		link.resize(len, vector<int>(sigma));
 		value.resize(len);
 		term.resize(len);

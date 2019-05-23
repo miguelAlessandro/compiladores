@@ -1,30 +1,32 @@
 #ifndef SYMBOL_HPP
 #define SYMBOL_HPP
-#include <trie.hpp>
+#include "trie.hpp"
 #include <vector>
+using namespace std;
 const int maxN = 1e5;
-struct Data{int token; double value;};
+struct Data{
+	int token; 
+	double value;
+	Data(int token=0, double value=0.d) {
+		this->token = token;
+		this->value = value;
+	}
+};
 Trie<Data> table(maxN);
-struct oper {int op, it, l, r;};
+struct oper {
+	int op, it, l, r;
+	oper(int op, int it, int l, int r): op(op), it(it), l(l), r(r) {}
+};
 vector<oper> codeTable;
 
 void genCode(int op, int it, int l, int r) {
-	codeTable.push_back({op, it, l, r}); 
+	codeTable.push_back(oper(op, it, l, r)); 
 }
 
-int tempVarN = 0;
-int genTempVar() {
-    char t[64];
-    sprintf(t, "T_%d", tempVarN++);
-    return putSymb(t, ID);
-}
-
-int putSymb(char name[], int token) {
-	double value = 0.0;
-	if (token == NUM) sscanf(name, "%lf", &value); 
+int putSymb(char name[], int token, double value) { 
 	int id = table.find(name);	
 	if (id) return id;
-	return table.add(name, {token, value});
+	return table.add(name, Data(token, value));
 }
 
 void printSymb(int root = 0, string s = "") {
@@ -40,7 +42,8 @@ void printSymb(int root = 0, string s = "") {
 }
 
 void printTabCod() {
-    for (auto e : codeTable) {
+    for (int i = 0; i < codeTable.size(); ++i) {
+		oper e = codeTable[i];
         printf("op = %d a1 = %d a2 = %d a3 = %c\n", e.op, e.it, e.l, e.r);
     }
 	puts("");
