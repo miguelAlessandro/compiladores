@@ -1,7 +1,6 @@
 %{
 #include <bits/stdc++.h>
 #include "symbol.hpp"
-//#define YYSTYPE char*
 using namespace std;
 struct Point {
 	double x, y;
@@ -22,7 +21,6 @@ char lexema[maxN];
 int yylex();
 int tempVarN = 0;
 int genTempVar();
-
 %}
 
 %start program
@@ -38,7 +36,7 @@ int genTempVar();
 %token INIT END
 %token IF ELSE
 %token WHILE FOR COMPARATOR
-%token DOTCOM COMMA
+%token DOTCOM CONMA
 %token DATATYPE
 
 %%
@@ -46,36 +44,41 @@ int genTempVar();
 program: INIT block END;
 
 block: 
-	| if_sentence block
-	| while_loop block
-	| for_loop block
-	| funcion block
-	| assignation block
-	| declaration block
+	| block control_flow
+	| block funcion
+	| block creation
 ;
 
+
+control_flow: if | for | while;
+
+if: IF OP logic_list CP OB block CB;
+while: WHILE OP logic_list CP OB block CB;
+for: FOR OP declaration DOTCOM logic_list DOTCOM creation CB OB block CB;
+
+
 funcion: VAR OP args CP OB block CB;
-args: /* no arguments */
+
+
+args:
 	| arg
-	| args COMMA arg
+	| args CONMA arg
 ;
+
 arg: term
 ;
 
-if_sentence: IF OP logicList CP OB block CB;
-
-while_loop: WHILE OP logicList CP OB block CB;
-
-for_loop: FOR OP declaration DOTCOM logicList DOTCOM assignation CP OB block CB;
-
-logicList: condition
-	| logicList AND condition
-	| logicList OR condition
+logic_list: condition
+	| logic_list AND condition
+	| logic_list OR condition
 ;
 
-condition: term COMPARATOR term ;
+condition: term COMPARATOR term;
 
-assignation: term EQUAL exp { genCode(ASSING, $1, $3, '-'); } DOTCOM;
+creation: assignation | declaration;
+
+
+assignation: term EQUAL exp {genCode(ASSING, $1, $3, '-');} DOTCOM;
 
 declaration: DATATYPE VAR {$2 = putSymb(lexema, VAR, 0);} EQUAL exp { genCode(ASSING, $2, $5, '-'); } DOTCOM;
 
@@ -91,15 +94,69 @@ factor: factor2
 
 factor2: term
 	| factor2 POW NUM { int i = genTempVar(); genCode(POW, i, $1, $3); $$ = i; }
-	| OP  exp CP
+	| OP exp CP
 ;
 
 term: VAR { $$ = putSymb(lexema, VAR, 0); }
 	| NUM { $$ = putSymb(lexema, NUM, 1); }
-	| POINT { $$ = putSymb(lexema, POINT, 0);}
+	| point { $$ = putSymb(lexema, POINT, 0);}
 ;
 
+point: '[' NUM CONMA NUM ']'; 
+
 %%
+
+int find(char* lexema) {
+	if (strcasecmp(lexema, "init") == 0) return INIT;
+	if (strcasecmp(lexema, "end") == 0) return END;
+	if (strcasecmp(lexema, "if") == 0) return IF;
+	if (strcasecmp(lexema, "for") == 0) return FOR;
+	if (strcasecmp(lexema, "while") == 0) return WHILE;
+	if (strcasecmp(lexema, "int") == 0) return DATATYPE;
+	if (strcasecmp(lexema, "double") == 0) return DATATYPE;
+	if (strcasecmp(lexema, "float") == 0) return DATATYPE;
+	if (strcasecmp(lexema, "point") == 0) return DATATYPE;
+	return VAR;
+}
+
+int yylex() {
+	register int c = getchar();
+	if (isspace(c)) return yylex();
+	if (c == '+') return ADD;
+	if (c == '-') return SUB;
+	if (c == '*') return MUL;
+	if (c == '/') return DIV;
+	if (c == '(') return OP;
+	if (c == ')') return CP;
+	if (c == '{') return OB;
+	if (c == '}') return CB;
+	if (c == '[') return c;
+	if (c == ']') return c;
+	if (c == '=') return EQUAL;
+	if (c == ';') return DOTCOM;
+	if (c == ',') return CONMA;
+	if (isdigit(c)) {
+		int n = 0;
+		while (isdigit(c)) {
+			lexema[n++] = c;
+			c = getchar();
+		}		
+		lexema[n] = 0;
+		ungetc(c, stdin);
+		return NUM;
+	}
+	if (isalpha(c)) {
+		int n = 0;
+		while (isalnum(c)) {
+			lexema[n++] = c;
+			c = getchar();
+		}
+		lexema[n] = 0;
+		ungetc(c, stdin);
+		return find(lexema);
+	}
+	return c;
+}
 
 int genTempVar() {
     char t[64];
